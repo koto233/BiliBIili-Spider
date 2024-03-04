@@ -38,9 +38,9 @@ def Get_Url(cid, page, sort):
     sort=3 : 评论数最多
     sort=4 : 收藏数最多
     参数:
-    参数:
         cid (int) : 专栏种类
         page(int) : 页数
+        sort(int) : 排序
     Returns:
         string: 网址
     """
