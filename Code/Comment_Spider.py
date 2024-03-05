@@ -27,87 +27,10 @@ def request_header():
     return headers
 
 
-# 调用函数scroll将左侧的滚动条滑动到底部
-def scroll(driver):
-    driver.execute_script(
-        """ 
-        (function () { 
-            var y = document.body.scrollTop; 
-            var step = 100; 
-            window.scroll(0, y); 
-            function f() { 
-                if (y < document.body.scrollHeight) { 
-                    y += step; 
-                    window.scroll(0, y); 
-                    setTimeout(f, 50); 
-                }
-                else { 
-                    window.scroll(0, y); 
-                    document.title += "scroll-done"; 
-                } 
-            } 
-            setTimeout(f, 1000); 
-        })(); 
-        """
-    )
-
-
 def get_cookies():
     with open("Data\登录文件\cookies文件.pickle", "rb") as file:
         cookiesList = pickle.load(file)
     return cookiesList
-
-
-###获取目标url###
-def target_url(id):
-    # with open("Data\登录文件\cookies文件.pickle",'rb') as file:
-    #     cookiesList = pickle.load(file)
-    option = webdriver.ChromeOptions()
-    option.add_argument("--ignore-certificate-errors")
-
-    driver = swd.Chrome(chrome_options=option)
-    # 访问网页
-    driver.get("https://www.bilibili.com/")
-    print("正在登录b站...")
-    # 用cookies登录b站
-
-    # 现在你可以像之前一样使用这些 cookies
-    for cookie in get_cookies():
-        driver.add_cookie(cookie)
-    # 登录后等待一段时间，让页面加载完成
-    time.sleep(15)
-
-    # 尝试获取用户名元素
-    print("登陆成功")
-    url = f"https://www.bilibili.com/read/cv{id}/?from=category_1.top_right_bar_window_history.content.click"
-
-    driver.get(url)
-
-    # 等待一些时间，以确保页面加载完成（你可以根据需要使用等待条件）
-    time.sleep(5)
-    UrlList = []
-    url_pattern = r"https?://[^\s/$.?#].[^\s]*\/main\?[^\s]*"
-    print("开始滚动滚动条")
-    scroll(driver)
-    time.sleep(10)  # 等待一些时间，以确保页面刷新完成
-    xhr_requests = driver.requests
-    for request in xhr_requests:
-        if re.search(url_pattern, request.url):
-            print("匹配到正确的url")
-            print(request.url)
-            if request.url not in UrlList:
-                print("添加url")
-                UrlList.append(request.url)
-    driver.quit()
-    print(UrlList)
-    return UrlList
-
-
-###时间戳转换###
-def trans_date(v_timestamp):
-    timeArray = time.localtime(v_timestamp)
-    otherStyleTime = time.strftime("%Y-%m-%d %H:%M:%S", timeArray)
-    return otherStyleTime
 
 
 ###获取数据###

@@ -20,7 +20,7 @@ def Request_Header():
     return headers
 
 
-def Get_Url(cid, page, sort):
+def Get_Url(cid, pn, sort):
     """_summary_
     地址规则 https://api.bilibili.com/x/article/recommends?cid=2&pn=1&ps=20&jsonp=jsonp&aids=&sort=1
     cid为专栏种类
@@ -44,14 +44,7 @@ def Get_Url(cid, page, sort):
     Returns:
         string: 网址
     """
-    url = (
-        "https://api.bilibili.com/x/article/recommends?cid="
-        + cid
-        + "&pn="
-        + page
-        + "&ps=20&jsonp=jsonp&aids=&sort="
-        + sort
-    )
+    url = f"https://api.bilibili.com/x/article/recommends?cid={cid}&pn={pn}&ps=20&jsonp=jsonp&aids=&sort={sort}"
     return url
 
 

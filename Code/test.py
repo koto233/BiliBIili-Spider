@@ -1,3 +1,4 @@
+import pickle
 import requests
 from bs4 import BeautifulSoup
 import json
@@ -15,28 +16,35 @@ def Request_Header():
     return headers
 
 
-headers = {"User-Agent": "XXXX"}
-# 视频id
-oid = 32612698
-# 评论页数
-pn = 1
-# 排序种类 0是按时间排序 2是按热度排序
-sort = 2
+def get_cookies():
+    with open("Data\登录文件\cookies文件.pickle", "rb") as file:
+        cookiesList = pickle.load(file)
+    return cookiesList
 
-while True:
-    url = f"https://api.bilibili.com/x/v2/reply?pn={pn}&type=12&oid={oid}&sort={sort}"
-    reponse = requests.get(url, headers=headers)
-    a = json.loads(reponse.text)
-    print(a)
-    if pn == 1:
-        count = a["data"]["page"]["count"]
-        size = a["data"]["page"]["size"]
-        page = count // size + 1
-        print(page)
-    for b in a["data"]["replies"]:
-        # print(b["content"]["message"])
-        print("-" * 10)
-    if pn != page:
-        pn += 1
-    else:
-        break
+
+def Get_Comment():
+    cookies_dict = {cookie["name"]: cookie["value"] for cookie in get_cookies()}
+    # 专栏id
+    oid = 32447224
+    # 评论页数
+    pn = 1
+    # 排序种类 0是按时间排序 2是按热度排序
+    sort = 2
+    while True:
+        url = (
+            f"https://api.bilibili.com/x/v2/reply?pn={pn}&type=12&oid={oid}&sort={sort}"
+        )
+        reponse = requests.get(url, headers=Request_Header(), cookies=cookies_dict)
+        a = json.loads(reponse.text)
+        print(a)
+        if pn == 1:
+            count = a["data"]["page"]["count"]
+            size = a["data"]["page"]["size"]
+            page = count // size + 1
+        for b in a["data"]["replies"]:
+            print(b["content"]["message"])
+            print("-" * 10)
+        if pn != page:
+            pn += 1
+        else:
+            break
