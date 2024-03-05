@@ -1,29 +1,22 @@
 import csv
-import pickle
-import requests
-import time
-import pandas as pd
-import json
-from selenium.webdriver.chrome.options import Options
-from seleniumwire import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 import os
-from browsermobproxy import Server
-from selenium.webdriver.common.keys import Keys
-import re
-from selenium import webdriver
-from seleniumwire import webdriver as swd
-from mitmproxy import proxy, options
-from mitmproxy.tools.dump import DumpMaster
-from selenium.common.exceptions import NoSuchElementException
+import pickle
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import json
 from fake_useragent import UserAgent
+import time
 
 
-# 浏览器请求头伪装
-def request_header():
+def Request_Header():
+    """_summary_
+    浏览器请求头伪装
+        Returns:
+            {}: 浏览器请求头
+    """
     headers = {"User-Agent": UserAgent().random}
+
     return headers
 
 
@@ -33,39 +26,38 @@ def get_cookies():
     return cookiesList
 
 
-###获取数据###
-def get_data(url):
+# def get_id():
+#     cidName_li = ["动画", "游戏", "影视", "生活", "兴趣", "轻小说", "科技", "笔记"]
+#     # cidName_li = ["动画"]
+#     id_li = []
+#     data_folder_name = f"Data\总览数据"
+#     os.makedirs(data_folder_name, exist_ok=True)
+#     for i in range(len(cidName_li)):
+#         csv_file = f"{data_folder_name}\{cidName_li[i]}.csv"
+#         print(csv_file)
+#         with open(csv_file, "r", newline="", encoding="utf-8") as file:
+#             reader = csv.reader(file)
+#             # 跳过标题行（如果存在）
+#             next(reader, None)  # 这会读取第一行（即标题行）并跳过它
+#             # 逐行读取CSV文件
+#             for row in reader:
+#                 if row:  # 确保行不为空
+#                     # 假设第一列是ID，最后一列是View URL
+#                     id_li.append(row[0])
 
-    cookies_dict = {cookie["name"]: cookie["value"] for cookie in get_cookies()}
-    data = []
-    response = requests.get(url, headers=request_header(), cookies=cookies_dict)
-    print(response.status_code)
-    if response.status_code == 200:
-        json_response = response.json()
-        try:
-            replies = json_response["data"]["replies"]
-            data.append(replies)
-        except:
-            print("返回数据为空")
-    else:
-        print("请求错误")
-    time.sleep(1)
-
-    return data
+#     return id_li
 
 
 # 将文件写入csv中
 def write_to_csv(data, csv_file_path):
-    comments_data = [["用户名", "性别", "评论时间", "点赞数", "内容"]]
+    comments_data = [["用户名", "性别", "点赞数", "内容"]]
     for replies in data:
-        print("正在读取第" + str(data.index(replies) + 1) + "个网址")
         for reply in replies:
             uname = reply["member"]["uname"]
             sex = reply["member"]["sex"]
-            time1 = trans_date(reply["ctime"])
             like = reply["like"]
             content = reply["content"]["message"]
-            comments_data.append([uname, sex, time1, like, content])
+            comments_data.append([uname, sex, like, content])
 
     # 创建一个DataFrame
     df = pd.DataFrame(comments_data)
@@ -76,7 +68,54 @@ def write_to_csv(data, csv_file_path):
     print(f"正在写入数据进 {csv_file_path}")
 
 
-if __name__ == "__main__":
+def Get_Comment(oid, file_name):
+    cookies_dict = {cookie["name"]: cookie["value"] for cookie in get_cookies()}
+    # 评论页数
+    pn = 1
+    # 排序种类 0是按时间排序 2是按热度排序
+    sort = 2
+    data = []
+    while True:
+        url = (
+            f"https://api.bilibili.com/x/v2/reply?pn={pn}&type=12&oid={oid}&sort={sort}"
+        )
+        reponse = requests.get(url, headers=Request_Header(), cookies=cookies_dict)
+        if reponse.status_code != 200:
+            print("网站请求失败")
+        try:
+            json_data = json.loads(reponse.text)
+        except:
+            print("获取json失败")
+        if pn == 1:
+            try:
+                count = json_data["data"]["page"]["count"]
+                size = json_data["data"]["page"]["size"]
+                page = count // size + 1
+                if page == 1:
+                    break
+                else:
+                    print(f"本篇专栏评论有{page}页")
+            except:
+                print("本篇专栏没有评论")
+                break
+        try:
+            replies = json_data["data"]["replies"]
+            if len(replies) == 0:
+                print("本篇专栏没有评论")
+                break
+            else:
+                print(f"获取到评论{replies}")
+                data.append(replies)
+                write_to_csv(data, file_name)
+        except:
+            print("返回数据为空")
+        if pn != page:
+            pn += 1
+        else:
+            break
+
+
+def main():
     cidName_li = ["动画", "游戏", "影视", "生活", "兴趣", "轻小说", "科技", "笔记"]
     # cidName_li = ["动画"]
     id_url_dict = {}
@@ -84,7 +123,7 @@ if __name__ == "__main__":
     os.makedirs(data_folder_name, exist_ok=True)
     for i in range(len(cidName_li)):
         csv_file = f"{data_folder_name}\{cidName_li[i]}.csv"
-        print(csv_file)
+        print(f"读取文件{csv_file}")
         with open(csv_file, "r", newline="", encoding="utf-8") as file:
             reader = csv.reader(file)
             # 跳过标题行（如果存在）
@@ -99,22 +138,11 @@ if __name__ == "__main__":
         # 打印字典内容来验证
         for id, url in id_url_dict.items():
             print(f"开始爬取ID为{id}的文章")
-            UrlList = target_url(id)
-            data_folder_name = f"Data\评论\{cidName_li[i]}"
-            os.makedirs(data_folder_name, exist_ok=True)
             folder_name = f"Data\评论\{cidName_li[i]}_评论"
             file_name = f"{folder_name}\{id}_comments.csv"
             os.makedirs(folder_name, exist_ok=True)
-            for apiurl in UrlList:
-                data = get_data(apiurl)
-                if len(data) == 0:
-                    print("本页评论为0")
-                    continue
-                write_to_csv(data, file_name)
-                print("写入完成")
+            Get_Comment(id, file_name)
 
-    # data = get_data(
-    #     "https://api.bilibili.com/x/v2/reply/wbi/main?next=0&type=12&oid=31793668&mode=3&plat=1&web_location=1315875&gaia_source=Athena&w_rid=810ef80388becba111f16f4d238c8777&wts=1709464059"
-    # )
-    # file_name = f"comments.csv"
-    # write_to_csv(data, file_name)
+
+if __name__ == "__main__":
+    main()
