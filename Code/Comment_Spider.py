@@ -156,7 +156,7 @@ def write_to_csv(data, csv_file_path):
 
 if __name__ == "__main__":
     cidName_li = ["动画", "游戏", "影视", "生活", "兴趣", "轻小说", "科技", "笔记"]
-    cidName_li = ["动画"]
+    # cidName_li = ["动画"]
     id_url_dict = {}
     data_folder_name=f"Data\总览数据"
     os.makedirs(data_folder_name, exist_ok=True)
