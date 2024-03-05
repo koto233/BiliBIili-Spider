@@ -3,7 +3,6 @@ import random
 import time
 import requests
 from bs4 import BeautifulSoup
-import pymysql as pymysql
 from fake_useragent import UserAgent
 import json
 import csv
