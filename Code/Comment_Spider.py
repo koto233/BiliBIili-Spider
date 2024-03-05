@@ -120,11 +120,11 @@ def get_data(url):
     print(response.status_code)
     if response.status_code == 200:
         json_response = response.json()
-        replies = json_response["data"]["replies"]
-        # 将 replies 保存为 JSON 文件
-        # with open(f'data.json', 'w', encoding='utf-8') as f:
-        # json.dump(replies, f, ensure_ascii=False, indent=4)
-        data.append(replies)
+        try:
+            replies = json_response["data"]["replies"]
+            data.append(replies)
+        except:
+            print("返回数据为空")
     else:
         print("请求错误")
     time.sleep(1)
@@ -185,6 +185,9 @@ if __name__ == "__main__":
             os.makedirs(folder_name, exist_ok=True)
             for apiurl in UrlList:
                 data = get_data(apiurl)
+                if(len(data)==0):
+                    print("本页评论为0")
+                    continue
                 write_to_csv(data, file_name)
                 print("写入完成")
 
