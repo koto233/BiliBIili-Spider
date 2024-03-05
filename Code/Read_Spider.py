@@ -87,7 +87,7 @@ def Get_Json():
                     print(f"按照{sortName}排序的{cidName}分区的专栏爬取结束，一共{i}页")
                     continue
                 print(f"获取到数据{data}")
-                data_folder_name=f"Data\总览数据"
+                data_folder_name = f"Data\总览数据"
                 os.makedirs(data_folder_name, exist_ok=True)
                 # CSV文件的名称和路径
                 csv_file = f"{data_folder_name}\{cidName}.csv"

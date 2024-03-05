@@ -53,10 +53,9 @@ def scroll(driver):
 
 
 def get_cookies():
-    with open("Data\登录文件\cookies文件.pickle",'rb') as file:
+    with open("Data\登录文件\cookies文件.pickle", "rb") as file:
         cookiesList = pickle.load(file)
     return cookiesList
-
 
 
 ###获取目标url###
@@ -113,10 +112,10 @@ def trans_date(v_timestamp):
 
 ###获取数据###
 def get_data(url):
-  
-    cookies_dict = {cookie['name']: cookie['value'] for cookie in get_cookies()}
+
+    cookies_dict = {cookie["name"]: cookie["value"] for cookie in get_cookies()}
     data = []
-    response = requests.get(url, headers=request_header(),cookies=cookies_dict)
+    response = requests.get(url, headers=request_header(), cookies=cookies_dict)
     print(response.status_code)
     if response.status_code == 200:
         json_response = response.json()
@@ -143,7 +142,7 @@ def write_to_csv(data, csv_file_path):
             time1 = trans_date(reply["ctime"])
             like = reply["like"]
             content = reply["content"]["message"]
-            comments_data.append([uname, sex,  time1, like, content])
+            comments_data.append([uname, sex, time1, like, content])
 
     # 创建一个DataFrame
     df = pd.DataFrame(comments_data)
@@ -158,7 +157,7 @@ if __name__ == "__main__":
     cidName_li = ["动画", "游戏", "影视", "生活", "兴趣", "轻小说", "科技", "笔记"]
     # cidName_li = ["动画"]
     id_url_dict = {}
-    data_folder_name=f"Data\总览数据"
+    data_folder_name = f"Data\总览数据"
     os.makedirs(data_folder_name, exist_ok=True)
     for i in range(len(cidName_li)):
         csv_file = f"{data_folder_name}\{cidName_li[i]}.csv"
@@ -178,19 +177,18 @@ if __name__ == "__main__":
         for id, url in id_url_dict.items():
             print(f"开始爬取ID为{id}的文章")
             UrlList = target_url(id)
-            data_folder_name=f"Data\评论\{cidName_li[i]}"
+            data_folder_name = f"Data\评论\{cidName_li[i]}"
             os.makedirs(data_folder_name, exist_ok=True)
             folder_name = f"Data\评论\{cidName_li[i]}_评论"
             file_name = f"{folder_name}\{id}_comments.csv"
             os.makedirs(folder_name, exist_ok=True)
             for apiurl in UrlList:
                 data = get_data(apiurl)
-                if(len(data)==0):
+                if len(data) == 0:
                     print("本页评论为0")
                     continue
                 write_to_csv(data, file_name)
                 print("写入完成")
-
 
     # data = get_data(
     #     "https://api.bilibili.com/x/v2/reply/wbi/main?next=0&type=12&oid=31793668&mode=3&plat=1&web_location=1315875&gaia_source=Athena&w_rid=810ef80388becba111f16f4d238c8777&wts=1709464059"
