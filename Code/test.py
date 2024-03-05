@@ -134,3 +134,7 @@ def main():
             file_name = f"{folder_name}\{id}_comments.csv"
             os.makedirs(folder_name, exist_ok=True)
             Get_Comment(id, file_name)
+
+
+if __name__ == "__main__":
+    main()
