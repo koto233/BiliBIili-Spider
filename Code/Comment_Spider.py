@@ -104,8 +104,10 @@ def Get_Comment(oid, file_name):
             page=count_page(json_data)
             if(page==0):
                 break              
-        replies = json_data["data"]["replies"]
-        
+        try:
+            replies = json_data["data"]["replies"]
+        except:
+            print("数据为空")
         for comment in replies:
             if comment.get('replies'):
                 rp_id = comment.get('rpid')
