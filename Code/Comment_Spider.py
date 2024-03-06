@@ -58,7 +58,6 @@ def write_to_csv(data, csv_file_path):
             like = reply["like"]
             content = reply["content"]["message"]
             comments_data.append([uname, sex, like, content])
-        print(f"保存数据{comments_data}")
 
     # 创建一个DataFrame
     df = pd.DataFrame(comments_data)
@@ -111,25 +110,29 @@ def Get_Comment(oid, file_name):
             if comment.get('replies'):
                 rp_id = comment.get('rpid')
                 print(f"获取rpid为{rp_id}子评论")
+                rp_page=1
                 while True: 
                     rp_num = 10
-                    rp_page = 1
                     reply_url = f'https://api.bilibili.com/x/v2/reply/reply?' + \
                                 f'type=12&pn={rp_page}&oid={oid}&ps={rp_num}&root={rp_id}'
+                    print(reply_url)
                     reply_response =  requests.get(reply_url, headers=Request_Header(), cookies=cookies_dict)
                     reply_reply = json.loads(reply_response.text) 
-                    max_page=count_page(reply_reply)
-                    if(max_page == 0):
-                        break   
+                    if(rp_page==1):
+                        max_page=count_page(reply_reply)
+                        if(max_page == 0):
+                            break   
                     reply_reply = reply_reply.get('data').get('replies')  
-                    # write_to_csv(reply_reply, file_name)
                     # print(f"{rp_id}获取到rp_id的子评论\n{reply_reply}")
                     if reply_reply is None:
-                        break                       
+                        break
+                    for r in reply_reply:  
+                        replies.append(r)
                     rp_page += 1         
                     if(rp_page>max_page):
                         break                       
         print(f"获取到评论{replies}")
+        data.append(replies)
         write_to_csv(data, file_name)
 
         if pn != page:
