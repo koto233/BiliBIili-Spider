@@ -58,6 +58,7 @@ def write_to_csv(data, csv_file_path):
             like = reply["like"]
             content = reply["content"]["message"]
             comments_data.append([uname, sex, like, content])
+        print(f"保存数据{comments_data}")
 
     # 创建一个DataFrame
     df = pd.DataFrame(comments_data)
@@ -66,6 +67,20 @@ def write_to_csv(data, csv_file_path):
     df.to_csv(csv_file_path, index=False, header=False, encoding="utf_8_sig")
 
     print(f"正在写入数据进 {csv_file_path}")
+
+def count_page(json_data):
+    try:
+        count = json_data["data"]["page"]["count"]
+        size = json_data["data"]["page"]["size"]
+        page = count // size + 1
+        if(count==0):
+            print("本次数据没有评论")
+            return 0
+        print(f"本次数据专栏评论有{page}页,共{count}条评论")
+    except:
+        print("本次数据不存在或已被删除")
+        return 0
+    return page
 
 
 def Get_Comment(oid, file_name):
@@ -87,28 +102,36 @@ def Get_Comment(oid, file_name):
         except:
             print("获取json失败")
         if pn == 1:
-            try:
-                count = json_data["data"]["page"]["count"]
-                size = json_data["data"]["page"]["size"]
-                page = count // size + 1
-                if page == 1:
-                    break
-                else:
-                    print(f"本篇专栏评论有{page}页")
-            except:
-                print("本篇专栏没有评论")
-                break
-        try:
-            replies = json_data["data"]["replies"]
-            if len(replies) == 0:
-                print("本篇专栏没有评论")
-                break
-            else:
-                print(f"获取到评论{replies}")
-                data.append(replies)
-                write_to_csv(data, file_name)
-        except:
-            print("返回数据为空")
+            page=count_page(json_data)
+            if(page==0):
+                break              
+        replies = json_data["data"]["replies"]
+        
+        for comment in replies:
+            if comment.get('replies'):
+                rp_id = comment.get('rpid')
+                print(f"获取rpid为{rp_id}子评论")
+                while True: 
+                    rp_num = 10
+                    rp_page = 1
+                    reply_url = f'https://api.bilibili.com/x/v2/reply/reply?' + \
+                                f'type=12&pn={rp_page}&oid={oid}&ps={rp_num}&root={rp_id}'
+                    reply_response =  requests.get(reply_url, headers=Request_Header(), cookies=cookies_dict)
+                    reply_reply = json.loads(reply_response.text) 
+                    max_page=count_page(reply_reply)
+                    if(max_page == 0):
+                        break   
+                    reply_reply = reply_reply.get('data').get('replies')  
+                    # write_to_csv(reply_reply, file_name)
+                    # print(f"{rp_id}获取到rp_id的子评论\n{reply_reply}")
+                    if reply_reply is None:
+                        break                       
+                    rp_page += 1         
+                    if(rp_page>max_page):
+                        break                       
+        print(f"获取到评论{replies}")
+        write_to_csv(data, file_name)
+
         if pn != page:
             pn += 1
         else:
@@ -146,3 +169,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
