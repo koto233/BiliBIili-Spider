@@ -9,7 +9,7 @@ import json
 import csv
 
 
-def Request_Header():
+def request_header():
     """_summary_
     浏览器请求头伪装
         Returns:
@@ -20,7 +20,7 @@ def Request_Header():
     return headers
 
 
-def Get_Url(cid, pn, sort):
+def get_url(cid, pn, sort):
     """_summary_
     地址规则 https://api.bilibili.com/x/article/recommends?cid=2&pn=1&ps=20&jsonp=jsonp&aids=&sort=1
     cid为专栏种类
@@ -48,7 +48,9 @@ def Get_Url(cid, pn, sort):
     return url
 
 
-def Get_Json():
+def main():
+    """爬取专栏数据
+    """
     cid_dic = {
         "动画": "2",
         "游戏": "1",
@@ -65,26 +67,35 @@ def Get_Json():
         "评论数最多": "3",
         "收藏数最多": "4",
     }
+    # 循环1：遍历分区
     for cidName, cid in cid_dic.items():
         print(f"---------本轮爬取开始,爬取分区为{cidName}的专栏-------")
+        
+        # 循环2：遍历排序方式
         for sortName, sort in sort_dic.items():
             print(f"---------按照{sortName}排序-------")
+
+            # 循环3：循环专栏页1-99
             for i in range(1, 99):
                 print(f"---------正在爬取第{str(i)}页-------{cidName}")
-                url = Get_Url(cid, str(i), sort)
+                url = get_url(cid, str(i), sort)
                 print(url)
-                req = requests.get(url=url, headers=Request_Header(), timeout=10).text
+
+                # 获取请求json数据
+                req = requests.get(url=url, headers=request_header(), timeout=10).text
                 reqs = req.replace("fetchJSON_comment98(", "").strip(");")
                 data = json.loads(reqs)
+
+                # 判断数据是否为空
                 if len(data["data"]) == 0:
                     print(f"按照{sortName}排序的{cidName}分区的专栏爬取结束，一共{i}页")
-                    continue
+                    continue              
                 print(f"获取到数据{data}")
+
+                # 创建目录和文件保存数据
                 data_folder_name = f"Data\总览数据"
-                os.makedirs(data_folder_name, exist_ok=True)
-                # CSV文件的名称和路径
-                csv_file = f"{data_folder_name}\{cidName}.csv"
-                # CSV文件的表头
+                os.makedirs(data_folder_name, exist_ok=True)                
+                csv_file = f"{data_folder_name}\{cidName}.csv"            
                 headers = [
                     "ID",
                     "Title",
@@ -98,14 +109,17 @@ def Get_Json():
                     "Dynamic",
                     "View URL",
                 ]
+
                 # 根据是否是第一页选择文件打开模式
                 mode = "w" if i == 1 else "a"
                 header_mode = True if i == 1 else False
                 with open(csv_file, mode, newline="", encoding="utf-8") as file:
                     writer = csv.writer(file)
+
                     # 如果是第一页，写入表头
                     if header_mode:
                         writer.writerow(headers)
+
                     # 遍历数据项，提取信息并写入CSV
                     for item in data["data"]:
                         row = [
@@ -125,10 +139,12 @@ def Get_Json():
                 print("数据保存到CSV完成。")
                 print(f"---------第{i}页爬取结束-------")
                 print("---------开始随机延时-------")
+                
+                # 随机延时，防止被查封
                 time.sleep(random.randint(1, 3))
             print(f"---------按照{sortName}排序的{cidName}分区爬取结束-------")
         print(f"---------{cidName}分区爬取结束-------")
 
 
 if __name__ == "__main__":
-    Get_Json()
+    main()
